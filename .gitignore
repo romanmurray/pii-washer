@@ -1,0 +1,52 @@
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Python bytecode cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Local working notes and archived docs (not shipped)
+archive/
+/2026-*.md
+SECURITY-REVIEW-REQUEST.md
+SECURITY-REVIEW-FINDINGS.md
+
+# Git worktrees (local development workspaces)
+.worktrees/
+
+# Superpowers plugin state
+.superpowers/
+
+# Claude Code config (local only)
+.claude/settings.local.json
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# spaCy model downloads (large, shouldn't be in repo)
+*.whl
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+*.spec
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
