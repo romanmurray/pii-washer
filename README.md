@@ -1,4 +1,6 @@
-# PII-Washer
+<p align="center">
+  <img src="assets/logo/pii-washer-social-1280x640.png" alt="PII-Washer — local-only PII detection and text sanitization" width="720">
+</p>
 
 Local PII detection and text sanitization. Paste text containing personal data, get a clean version with all sensitive items replaced by consistent placeholders. Use the clean text with ChatGPT, Claude, or any other tool — then paste the response back and swap the placeholders for the originals.
 
