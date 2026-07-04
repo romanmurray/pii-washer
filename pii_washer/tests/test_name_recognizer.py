@@ -2,7 +2,12 @@ import pytest
 from presidio_analyzer import AnalyzerEngine
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 
-from pii_washer.name_recognizer import CapitalizedPairRecognizer, DictionaryNameRecognizer, TitleNameRecognizer
+from pii_washer.name_recognizer import (
+    CapitalizedPairRecognizer,
+    DictionaryNameRecognizer,
+    GreetingNameRecognizer,
+    TitleNameRecognizer,
+)
 
 
 @pytest.fixture(scope="module")
@@ -300,3 +305,61 @@ class TestCapitalizedPairRecognizer:
         results = cap_recognizer.analyze(text, entities=["PERSON"], nlp_artifacts=None, regex_flags=0)
         texts = [text[r.start:r.end] for r in results]
         assert any("Marcus" in t and "Chen" in t for t in texts)
+
+
+@pytest.fixture(scope="module")
+def greeting_recognizer():
+    return GreetingNameRecognizer()
+
+
+class TestGreetingNameRecognizer:
+    def test_hi_first_name(self, greeting_recognizer):
+        """'Hi Sandra,' — a lone first name after a greeting is a name."""
+        text = "Hi Sandra,\n\nThanks for reaching out."
+        results = greeting_recognizer.analyze(text, entities=["PERSON"], nlp_artifacts=None)
+        assert any(text[r.start:r.end] == "Sandra" for r in results)
+
+    def test_dear_full_name(self, greeting_recognizer):
+        text = "Dear John Smith, your order has shipped."
+        results = greeting_recognizer.analyze(text, entities=["PERSON"], nlp_artifacts=None)
+        assert any(text[r.start:r.end] == "John Smith" for r in results)
+
+    def test_lowercase_greeting(self, greeting_recognizer):
+        text = "hey Sandra can you check this"
+        results = greeting_recognizer.analyze(text, entities=["PERSON"], nlp_artifacts=None)
+        assert any(text[r.start:r.end] == "Sandra" for r in results)
+
+    def test_greeting_with_comma(self, greeting_recognizer):
+        text = "Hello, Marcus. Welcome back."
+        results = greeting_recognizer.analyze(text, entities=["PERSON"], nlp_artifacts=None)
+        assert any(text[r.start:r.end] == "Marcus" for r in results)
+
+    def test_no_match_hi_there(self, greeting_recognizer):
+        text = "Hi There! Welcome to our newsletter."
+        results = greeting_recognizer.analyze(text, entities=["PERSON"], nlp_artifacts=None)
+        assert len(results) == 0
+
+    def test_no_match_dear_valued_customer(self, greeting_recognizer):
+        text = "Dear Valued Customer, your account is ready."
+        results = greeting_recognizer.analyze(text, entities=["PERSON"], nlp_artifacts=None)
+        assert len(results) == 0
+
+    def test_no_match_hello_everyone(self, greeting_recognizer):
+        text = "Hello Everyone, the meeting starts at noon."
+        results = greeting_recognizer.analyze(text, entities=["PERSON"], nlp_artifacts=None)
+        assert len(results) == 0
+
+    def test_no_match_without_greeting(self, greeting_recognizer):
+        text = "Sandra went to the store yesterday."
+        results = greeting_recognizer.analyze(text, entities=["PERSON"], nlp_artifacts=None)
+        assert len(results) == 0
+
+    def test_no_match_lowercase_word_after_greeting(self, greeting_recognizer):
+        text = "say hi to everyone at the office"
+        results = greeting_recognizer.analyze(text, entities=["PERSON"], nlp_artifacts=None)
+        assert len(results) == 0
+
+    def test_confidence_is_0_6(self, greeting_recognizer):
+        text = "Hi Sandra,"
+        results = greeting_recognizer.analyze(text, entities=["PERSON"], nlp_artifacts=None)
+        assert results and all(r.score == 0.6 for r in results)

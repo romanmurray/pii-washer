@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- A lone first name after a greeting ("Hi Sandra,") is now detected — a new greeting-based name recognizer covers the case where no surname, title, or NER hit exists
+- Street addresses keep their apartment suffix when a comma precedes it ("2847 Willow Creek Drive, Apt 12B" was previously cut at "Drive")
+- State abbreviation + zip ("IL 62704") is now captured as one ADDRESS span — previously the state abbreviation was only used as context to accept the zip, and itself leaked through
+
 ## [1.4.0] - 2026-07-03
 
 ### Added

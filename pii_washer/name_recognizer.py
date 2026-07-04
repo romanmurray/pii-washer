@@ -40,6 +40,54 @@ class TitleNameRecognizer(PatternRecognizer):
         )
 
 
+class GreetingNameRecognizer(EntityRecognizer):
+    """Detects a name right after a greeting ("Hi Sandra,").
+
+    The other name layers need a surname, a title, or NER to fire — a lone
+    first name in a salutation has none of those, but the greeting itself
+    is a strong signal that what follows is a name.
+    """
+
+    CONFIDENCE = 0.6
+
+    # Generic salutation targets that are not names
+    NON_NAMES = {
+        "there", "all", "everyone", "everybody", "team", "folks", "guys",
+        "friend", "friends", "sir", "madam", "customer", "support", "user",
+        "valued", "again", "colleagues",
+    }
+
+    # Greeting (any case) + capitalized word(s); [ \t] keeps the span on one line
+    _PATTERN = re.compile(
+        r"\b(?i:hi|hello|hey|dear|greetings)(?:,[ \t]*|[ \t]+)"
+        r"([A-Z](?:[a-z]+|[A-Z]+)(?:[ \t]+[A-Z](?:[a-z]+|[A-Z]+)){0,2})\b"
+    )
+
+    def __init__(self):
+        super().__init__(
+            supported_entities=["PERSON"],
+            supported_language="en",
+            name="GreetingNameRecognizer",
+        )
+
+    def load(self):
+        pass
+
+    def analyze(self, text, entities, nlp_artifacts=None, regex_flags=0):
+        results = []
+        for m in self._PATTERN.finditer(text):
+            words = m.group(1).split()
+            if words[0].lower() in self.NON_NAMES:
+                continue
+            results.append(RecognizerResult(
+                entity_type="PERSON",
+                start=m.start(1),
+                end=m.end(1),
+                score=self.CONFIDENCE,
+            ))
+        return results
+
+
 class DictionaryNameRecognizer(EntityRecognizer):
     """Detects names by matching common first names adjacent to capitalized words."""
 

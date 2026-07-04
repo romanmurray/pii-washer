@@ -549,7 +549,7 @@ class PIIDetectionEngine:
         r"(?:(?:N|S|E|W|North|South|East|West|NE|NW|SE|SW)\.?\s+)?"  # Optional directional
         r"(?:[A-Z][a-zA-Z]*\.?\s+){1,4}"                  # Street name (1-4 words)
         r"(?:" + _street_types_pattern + r")\.?"           # Street type suffix
-        r"(?:\s+(?:Apt|Suite|Ste|Unit|#)\s*\w+)?"         # Optional apt/suite
+        r"(?:,?\s+(?:Apt|Apartment|Suite|Ste|Unit|#)\.?\s*\w+)?"  # Optional apt/suite (comma allowed)
         r"\b"
     )
 
@@ -564,6 +564,14 @@ class PIIDetectionEngine:
 
     # Highway pattern
     _HIGHWAY_PATTERN = r"\b\d{1,5}\s+(?:Highway|Hwy|Route|Rte)\s+\d+\b"
+
+    # State abbreviation + zip ("IL 62704") — captures the state, which nothing
+    # else does. (?-i:) keeps it case-sensitive under Presidio's IGNORECASE
+    # default so prose like "in 46201 samples" can't match.
+    _STATE_ZIP_PATTERN = (
+        r"\b(?-i:(?:" + "|".join(US_STATE_ABBREVIATIONS) + r"))"
+        r"\s+\d{5}(?:-\d{4})?\b"
+    )
 
     # Zip code patterns
     ZIP_PLUS_4_PATTERN = r"\b\d{5}-\d{4}\b"  # e.g., 62704-1234
@@ -595,6 +603,7 @@ class PIIDetectionEngine:
                 Pattern("us_street_address", self.US_STREET_ADDRESS_PATTERN, 0.65),
                 Pattern("us_street_misspelled", self._MISSPELLED_STREET_PATTERN, 0.5),
                 Pattern("us_highway", self._HIGHWAY_PATTERN, 0.65),
+                Pattern("us_state_zip", self._STATE_ZIP_PATTERN, 0.7),
             ],
             supported_language="en",
         )
@@ -611,10 +620,16 @@ class PIIDetectionEngine:
         self._analyzer.registry.add_recognizer(zip_recognizer)
 
         # Register name recognizers
-        from pii_washer.name_recognizer import CapitalizedPairRecognizer, DictionaryNameRecognizer, TitleNameRecognizer
+        from pii_washer.name_recognizer import (
+            CapitalizedPairRecognizer,
+            DictionaryNameRecognizer,
+            GreetingNameRecognizer,
+            TitleNameRecognizer,
+        )
         self._analyzer.registry.add_recognizer(TitleNameRecognizer())
         self._analyzer.registry.add_recognizer(DictionaryNameRecognizer())
         self._analyzer.registry.add_recognizer(CapitalizedPairRecognizer())
+        self._analyzer.registry.add_recognizer(GreetingNameRecognizer())
 
         # SSN recognizer — remove Presidio's built-in to avoid false positives
         # from area codes like 9xx that Presidio doesn't validate.

@@ -725,6 +725,43 @@ def test_address_route(engine):
     assert any("340" in a["original_value"] for a in addresses)
 
 
+def test_address_with_comma_before_apt(engine):
+    """Apt suffix after a comma must stay part of the street address span."""
+    text = "Home address: 2847 Willow Creek Drive, Apt 12B, Springfield, IL 62704"
+    results = engine.detect(text)
+    addresses = [r for r in results if r["category"] == "ADDRESS"]
+    values = " ".join(a["original_value"] for a in addresses)
+    assert "Apt 12B" in values, f"Apt 12B not captured; got: {values}"
+
+
+def test_address_state_abbreviation_with_zip(engine):
+    """'IL 62704' — the state abbreviation must be captured, not just the zip."""
+    text = "Home address: 2847 Willow Creek Drive, Apt 12B, Springfield, IL 62704"
+    results = engine.detect(text)
+    addresses = [r for r in results if r["category"] == "ADDRESS"]
+    assert any(
+        "IL" in a["original_value"] and "62704" in a["original_value"]
+        for a in addresses
+    ), f"State+zip not captured; got: {[a['original_value'] for a in addresses]}"
+
+
+def test_no_state_zip_from_lowercase_preposition(engine):
+    """Lowercase 'in <5 digits>' prose must not be flagged as state+zip."""
+    text = "The study found effects in 46201 samples overall."
+    results = engine.detect(text)
+    addresses = [r for r in results if r["category"] == "ADDRESS"]
+    assert not any("46201" in a["original_value"] for a in addresses)
+
+
+def test_detect_name_after_greeting(engine):
+    """A lone first name after a greeting ('Hi Sandra,') must be detected."""
+    text = "Hi Sandra,\n\nThanks for reaching out about the account issue."
+    results = engine.detect(text)
+    names = [r for r in results if r["category"] == "NAME"]
+    assert any("Sandra" in n["original_value"] for n in names), \
+        f"Sandra not captured; got: {[n['original_value'] for n in names]}"
+
+
 # =============================================================================
 # Credit card pattern hardening tests
 # =============================================================================
