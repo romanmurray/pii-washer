@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Social preview image tagline replaced with the project's actual one-liner: "Local-only PII detection and text sanitization"
+
 ### Fixed
 
 - A lone first name after a greeting ("Hi Sandra,") is now detected — a new greeting-based name recognizer covers the case where no surname, title, or NER hit exists
